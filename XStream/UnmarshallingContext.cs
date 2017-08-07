@@ -133,8 +133,9 @@ namespace xstream {
         }
 
         public void StackObject(object value) {
+            string idReferenceAttribute = reader.GetAttribute(Attributes.id);
+
             try {
-                string idReferenceAttribute = reader.GetAttribute(Attributes.id);
                 if (!string.IsNullOrEmpty(idReferenceAttribute))
                 {
                     alreadyDeserialised.Add(idReferenceAttribute, value);
@@ -145,7 +146,7 @@ namespace xstream {
                 }
             }
             catch (ArgumentException e) {
-                //throw new ConversionException(string.Format("Couldn't add path:{0}, value: {1}", reader.CurrentPath, value), e);
+                throw new ConversionException(string.Format("Couldn't add path:{0}, value: {1}", reader.CurrentPath, value), e);
             }
         }
 

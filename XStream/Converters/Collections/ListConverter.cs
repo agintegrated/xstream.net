@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace xstream.Converters.Collections {
     internal class ListConverter : Converter {
@@ -52,21 +53,21 @@ namespace xstream.Converters.Collections {
                 throw new Exception("Unable to get element type for: " + context.currentTargetType.ToString());
             }
 
-            Type previousType = context.currentTargetType;
-            context.currentTargetType = elementType;
-
             int count = reader.NoOfChildren();
-            for (int i = 0; i < count; i++)
+            if (reader.MoveDown() && count > 0)
             {
-                if (reader.MoveDown())
+                Type previousType = context.currentTargetType;
+                context.currentTargetType = elementType;
+
+                for (int i = 0; i < count; i++)
                 {
                     result.Add(context.ConvertAnother(elementType));
-                    reader.MoveUp();
+                    Debug.Assert(reader.MoveNext() || result.Count == count);
                 }
-                reader.MoveNext();
-            }
+                reader.MoveUp();
 
-            context.currentTargetType = previousType;
+                context.currentTargetType = previousType;
+            }
 
             return result;
         }
