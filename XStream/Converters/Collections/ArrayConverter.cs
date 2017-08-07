@@ -20,7 +20,25 @@ namespace xstream.Converters.Collections {
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {
             int count = reader.NoOfChildren();
-            Array result = Array.CreateInstance(context.GetTypeFromOtherAssemblies(reader.GetAttribute(ARRAY_TYPE)), count);
+
+            // Use the actual data type we are deserializing to rather than inferring from xml metadata
+            Type arrayType = context.currentTargetType;
+
+            string arrayTypeName = reader.GetAttribute(ARRAY_TYPE);
+            if (arrayTypeName != "")
+            {
+                arrayType = context.GetTypeFromOtherAssemblies(arrayTypeName);
+            }
+
+            if (arrayType.IsArray)
+            {
+                // Due to the way that the currentTargetType and the constructor works, we need to get the element type instead of the current type.
+                //  This probably won't work well for arrays of arrays.
+                arrayType = arrayType.GetElementType();
+            }
+
+            Array result = Array.CreateInstance(arrayType, count);
+
             if (count != 0) {
                 reader.MoveDown();
                 for (int i = 0; i < count; i++) {

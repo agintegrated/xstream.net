@@ -26,15 +26,15 @@ namespace xstream.Converters.Collections {
         protected virtual void DoSpecificStuff(IDictionary dictionary, XStreamWriter writer) {}
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {
-            IDictionary result = EmptyDictionary(reader);
+            IDictionary result = EmptyDictionary(reader, context);
             int count = reader.NoOfChildren();
             reader.MoveDown();
             for (int i = 0; i < count; i++) {
                 reader.MoveDown();
                 object key = null, value = null;
-                GetObject(context, ref key, ref value, reader);
+                GetKeyObject(context, ref key, reader);
                 reader.MoveNext();
-                GetObject(context, ref key, ref value, reader);
+                GetValueObject(context, ref value, reader);
                 result.Add(key, value);
                 reader.MoveUp();
                 reader.MoveNext();
@@ -42,13 +42,29 @@ namespace xstream.Converters.Collections {
             return result;
         }
 
-        protected abstract IDictionary EmptyDictionary(XStreamReader reader);
+        protected abstract IDictionary EmptyDictionary(XStreamReader reader, UnmarshallingContext context);
 
         private static void GetObject(UnmarshallingContext context, ref object key, ref object value, XStreamReader reader) {
             string nodeName = reader.GetNodeName();
             object o = context.ConvertOriginal();
             if (BaseDictionaryConverter<Hashtable>.KEY.Equals(nodeName)) key = o;
             else value = o;
+        }
+
+        private static void GetKeyObject(UnmarshallingContext context, ref object key, XStreamReader reader)
+        {
+            Type keyType = context.currentTargetType.GenericTypeArguments[0];
+
+            string nodeName = reader.GetNodeName();
+            key = context.ConvertOriginal(keyType);
+        }
+
+        private static void GetValueObject(UnmarshallingContext context, ref object value, XStreamReader reader)
+        {
+            Type valueType = context.currentTargetType.GenericTypeArguments[1];
+
+            string nodeName = reader.GetNodeName();
+            value = context.ConvertOriginal(valueType);
         }
 
         private static void WriteNode(XStreamWriter writer, MarshallingContext context, string node, object value) {

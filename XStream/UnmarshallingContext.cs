@@ -11,6 +11,8 @@ namespace xstream {
         private readonly Aliases aliases;
         private readonly List<Assembly> assemblies;
 
+        public Type currentTargetType = null;
+
         internal UnmarshallingContext(XStreamReader reader, ConverterLookup converterLookup, Aliases aliases, List<Assembly> assemblies) {
             this.reader = reader;
             this.converterLookup = converterLookup;
@@ -31,6 +33,11 @@ namespace xstream {
         public object ConvertOriginal() {
             string nodeName = reader.GetNodeName();
             Type type = TypeToUse(nodeName);
+            return ConvertOriginal(type);
+        }
+
+        public object ConvertOriginal(Type type)
+        {
             Converter converter = converterLookup.GetConverter(type);
             if (converter != null) return converter.FromXml(reader, this);
             return new Unmarshaller(reader, this, converterLookup).Unmarshal(type);

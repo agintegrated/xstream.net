@@ -44,9 +44,19 @@ namespace xstream {
                     reader.MoveUp();
                 }
                 else {
-                    reader.MoveDown(field.Name);
-                    field.SetValue(result, ConvertField(field.FieldType));
-                    reader.MoveUp();
+                    if (reader.MoveDown(field.Name))
+                    {
+                        field.SetValue(result, ConvertField(field.FieldType));
+                        reader.MoveUp();
+                    }
+                    else
+                    {
+                        // Kept in place for use while debugging issues with missing fields
+                        if (System.Diagnostics.Debugger.IsAttached)
+                        {
+                            Console.Error.WriteLine("Skipping " + field.Name);
+                        }
+                    }
                 }
             }
             UnmarshalAs(result, type.BaseType);
@@ -57,9 +67,14 @@ namespace xstream {
             if (!string.IsNullOrEmpty(classAttribute)) fieldType = Type.GetType(Xmlifier.UnXmlify(classAttribute));
             Converter converter = converterLookup.GetConverter(fieldType);
             if (converter != null)
+            {
+                context.currentTargetType = fieldType;
                 return converter.FromXml(reader, context);
+            }
             else
+            {
                 return Unmarshal(fieldType);
+            }
         }
     }
 }
