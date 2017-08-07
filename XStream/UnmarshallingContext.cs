@@ -133,7 +133,13 @@ namespace xstream {
         }
 
         public void StackObject(object value) {
+            // NOTE:  Because this reader is not streaming, we will somtimes hit a reference before the id is defined.
+            //  Check for either 'id' or 'reference' when adding
             string idReferenceAttribute = reader.GetAttribute(Attributes.id);
+            if (string.IsNullOrEmpty(idReferenceAttribute))
+            {
+                idReferenceAttribute = reader.GetAttribute(Attributes.reference);
+            }
 
             try {
                 if (!string.IsNullOrEmpty(idReferenceAttribute))
@@ -151,7 +157,14 @@ namespace xstream {
         }
 
         public object Find() {
+            // NOTE:  Because this reader is not streaming, we will somtimes hit a reference before the id is defined.
+            //  Check for either 'id' or 'reference' when doing a lookup
             string idReferenceAttribute = reader.GetAttribute(Attributes.reference);
+            if (string.IsNullOrEmpty(idReferenceAttribute))
+            {
+                idReferenceAttribute = reader.GetAttribute(Attributes.id);
+            }
+
             if (!string.IsNullOrEmpty(idReferenceAttribute))
             {
                 if (alreadyDeserialised.ContainsKey(idReferenceAttribute))
