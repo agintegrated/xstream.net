@@ -18,12 +18,18 @@ namespace xstream {
         }
 
         internal object Unmarshal(Type type) {
-            object result = context.Find();
-            if (result != null) return result;
             if (reader.GetAttribute(Attributes.Null) == true.ToString())
+            {
                 return null;
-            result = DynamicInstanceBuilder.CreateInstance(type);
-            context.StackObject(result);
+            }
+
+            object result = context.Find();
+            if (result == null)
+            {
+                result = DynamicInstanceBuilder.CreateInstance(type);
+                context.StackObject(result);
+            }
+
             UnmarshalAs(result, type);
             return result;
         }
@@ -35,35 +41,40 @@ namespace xstream {
                 if (field.GetCustomAttributes(typeof (DontSerialiseAttribute), true).Length != 0) continue;
                 if (field.GetCustomAttributes(typeof (XmlIgnoreAttribute), true).Length != 0) continue;
                 if (typeof (MulticastDelegate).IsAssignableFrom(field.FieldType)) continue;
-                Match match = Constants.AutoPropertyNamePattern.Match(field.Name);
-                if (match.Success) {
-                    var propertyName = match.Result("$1");
-                    reader.MoveDown(propertyName);
-                    PropertyInfo property = type.GetProperty(propertyName);
-                    property.SetValue(result, ConvertField(field.FieldType), null);
-                    reader.MoveUp();
-                }
-                else {
-                    string reader_CurrentPath = reader.CurrentPath;
-                    if (reader.MoveDown(field.Name))
-                    {
-                        field.SetValue(result, ConvertField(field.FieldType));
-                        reader.MoveUp();
+                Match autoPropertyMatch = Constants.AutoPropertyNamePattern.Match(field.Name);
+                Match javaPropertyMatch = Constants.JavaInternalPropertyNamePattern.Match(field.Name);
 
-                        if(reader.CurrentPath != reader_CurrentPath)
-                        {
-                            Console.Error.WriteLine("Path exception " + field.Name);
-                        }
-                    }
-                    else
+                string fieldName = field.Name;
+                if (autoPropertyMatch.Success)
+                {
+                    fieldName = autoPropertyMatch.Result("$1");
+                    
+                }
+                else if (javaPropertyMatch.Success)
+                {
+                    fieldName = javaPropertyMatch.Result("$1");
+                }
+
+                string reader_CurrentPath = reader.CurrentPath;
+                if (reader.MoveDown(fieldName))
+                {
+                    field.SetValue(result, ConvertField(field.FieldType));
+                    reader.MoveUp();
+
+                    if(reader.CurrentPath != reader_CurrentPath)
                     {
-                        // Kept in place for use while debugging issues with missing fields
-                        if (System.Diagnostics.Debugger.IsAttached)
-                        {
-                            Console.Error.WriteLine("Skipping " + field.Name);
-                        }
+                        Console.Error.WriteLine("Path exception " + field.Name);
                     }
                 }
+                else
+                {
+                    // Kept in place for use while debugging issues with missing fields
+                    if (System.Diagnostics.Debugger.IsAttached)
+                    {
+                        Console.Error.WriteLine("Skipping " + field.Name);
+                    }
+                }
+                
             }
             UnmarshalAs(result, type.BaseType);
         }

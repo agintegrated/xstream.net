@@ -22,9 +22,17 @@ namespace xstream {
 
         public object ConvertAnother() {
             string nullAttribute = reader.GetAttribute(Attributes.Null);
-            if (nullAttribute != null && nullAttribute == "true") return null;
+            if (nullAttribute != null && nullAttribute == "true")
+            {
+                return null;
+            }
+
             object result = Find();
-            if (result != null) return result;
+            if (result != null)
+            {
+                return result;
+            }
+
             Converter converter = converterLookup.GetConverter(reader.GetNodeName());
             if (converter == null) return ConvertOriginal();
             return converter.FromXml(reader, this);
@@ -33,9 +41,17 @@ namespace xstream {
         internal object ConvertAnother(Type elementType)
         {
             string nullAttribute = reader.GetAttribute(Attributes.Null);
-            if (nullAttribute != null && nullAttribute == "true") return null;
+            if (nullAttribute != null && nullAttribute == "true")
+            {
+                return null;
+            }
+
             object result = Find();
-            if (result != null) return result;
+            if (result != null)
+            {
+                return result;
+            }
+
             Converter converter = converterLookup.GetConverter(elementType);
             if (converter == null) return ConvertOriginal(elementType);
             return converter.FromXml(reader, this);
@@ -118,16 +134,36 @@ namespace xstream {
 
         public void StackObject(object value) {
             try {
-                alreadyDeserialised.Add(reader.CurrentPath, value);
+                string idReferenceAttribute = reader.GetAttribute(Attributes.id);
+                if (!string.IsNullOrEmpty(idReferenceAttribute))
+                {
+                    alreadyDeserialised.Add(idReferenceAttribute, value);
+                }
+                else
+                {
+                    alreadyDeserialised[reader.CurrentPath] = value;
+                }
             }
             catch (ArgumentException e) {
-                throw new ConversionException(string.Format("Couldn't add path:{0}, value: {1}", reader.CurrentPath, value), e);
+                //throw new ConversionException(string.Format("Couldn't add path:{0}, value: {1}", reader.CurrentPath, value), e);
             }
         }
 
         public object Find() {
+            string idReferenceAttribute = reader.GetAttribute(Attributes.reference);
+            if (!string.IsNullOrEmpty(idReferenceAttribute))
+            {
+                if (alreadyDeserialised.ContainsKey(idReferenceAttribute))
+                {
+                    return alreadyDeserialised[idReferenceAttribute];
+                }
+            }
+
             string referencesAttribute = reader.GetAttribute(Attributes.references);
-            if (!string.IsNullOrEmpty(referencesAttribute)) return alreadyDeserialised[referencesAttribute];
+            if (!string.IsNullOrEmpty(referencesAttribute)) 
+            {
+                return alreadyDeserialised[referencesAttribute];
+            }
             return null;
         }
     }

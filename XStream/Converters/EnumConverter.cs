@@ -12,7 +12,7 @@ namespace xstream.Converters {
         }
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {
-            return Enum.Parse(Type.GetType(reader.GetAttribute(Attributes.AttributeType)), reader.GetValue());
+            return Enum.Parse(context.currentTargetType, reader.GetValue());
         }
     }
 }

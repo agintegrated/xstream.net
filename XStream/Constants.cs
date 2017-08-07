@@ -7,5 +7,6 @@ namespace xstream {
                                                              BindingFlags.FlattenHierarchy | BindingFlags.DeclaredOnly;
 
         internal static readonly Regex AutoPropertyNamePattern = new Regex("<(.*)>k__BackingField", RegexOptions.Compiled);
+        internal static readonly Regex JavaInternalPropertyNamePattern = new Regex("_(.*)", RegexOptions.Compiled);
     }
 }
