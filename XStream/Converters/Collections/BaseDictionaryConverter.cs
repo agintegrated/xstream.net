@@ -28,16 +28,22 @@ namespace xstream.Converters.Collections {
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {
             IDictionary result = EmptyDictionary(reader, context);
             int count = reader.NoOfChildren();
-            reader.MoveDown();
-            for (int i = 0; i < count; i++) {
-                reader.MoveDown();
-                object key = null, value = null;
-                GetKeyObject(context, ref key, reader);
-                reader.MoveNext();
-                GetValueObject(context, ref value, reader);
-                result.Add(key, value);
+            if (reader.MoveDown())
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (reader.MoveDown())
+                    {
+                        object key = null, value = null;
+                        GetKeyObject(context, ref key, reader);
+                        reader.MoveNext();
+                        GetValueObject(context, ref value, reader);
+                        result.Add(key, value);
+                        reader.MoveUp();
+                    }
+                    reader.MoveNext();
+                }
                 reader.MoveUp();
-                reader.MoveNext();
             }
             return result;
         }
@@ -53,18 +59,28 @@ namespace xstream.Converters.Collections {
 
         private static void GetKeyObject(UnmarshallingContext context, ref object key, XStreamReader reader)
         {
+            Type previousType = context.currentTargetType;
             Type keyType = context.currentTargetType.GenericTypeArguments[0];
 
             string nodeName = reader.GetNodeName();
+
+            context.currentTargetType = keyType;
             key = context.ConvertOriginal(keyType);
+
+            context.currentTargetType = previousType;
         }
 
         private static void GetValueObject(UnmarshallingContext context, ref object value, XStreamReader reader)
         {
+            Type previousType = context.currentTargetType;
             Type valueType = context.currentTargetType.GenericTypeArguments[1];
 
             string nodeName = reader.GetNodeName();
+
+            context.currentTargetType = valueType;
             value = context.ConvertOriginal(valueType);
+
+            context.currentTargetType = previousType;
         }
 
         private static void WriteNode(XStreamWriter writer, MarshallingContext context, string node, object value) {

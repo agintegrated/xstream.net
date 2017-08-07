@@ -11,15 +11,19 @@ namespace xstream.Converters.Collections {
             {
                 Type genericType = type.GetGenericTypeDefinition();
 
-                Type[] interfaces = genericType.GetInterfaces();
-                foreach(Type interfac in interfaces)
+                if (type.GenericTypeArguments.Length == 1)
                 {
-                    if(interfac == typeof(IList))
+                    Type[] interfaces = genericType.GetInterfaces();
+                    foreach (Type interfac in interfaces)
                     {
-                        return true;
+                        if (interfac == typeof(IList))
+                        {
+                            return true;
+                        }
                     }
                 }
             }
+
             return typeof (ArrayList).Equals(type);
         }
 
@@ -33,13 +37,37 @@ namespace xstream.Converters.Collections {
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {
             IList result = (IList)DynamicInstanceBuilder.CreateInstance(context.currentTargetType);
             
+            Type elementType = null;
+
+            if (context.currentTargetType.HasElementType)
+            {
+                elementType = context.currentTargetType.GetElementType();
+            }
+            else if (context.currentTargetType.IsGenericType)
+            {
+                elementType = context.currentTargetType.GenericTypeArguments[0];
+            }
+            else
+            {
+                throw new Exception("Unable to get element type for: " + context.currentTargetType.ToString());
+            }
+
+            Type previousType = context.currentTargetType;
+            context.currentTargetType = elementType;
+
             int count = reader.NoOfChildren();
-            reader.MoveDown();
-            for (int i = 0; i < count; i++) {
-                result.Add(context.ConvertAnother());
+            for (int i = 0; i < count; i++)
+            {
+                if (reader.MoveDown())
+                {
+                    result.Add(context.ConvertAnother(elementType));
+                    reader.MoveUp();
+                }
                 reader.MoveNext();
             }
-            reader.MoveUp();
+
+            context.currentTargetType = previousType;
+
             return result;
         }
     }

@@ -30,6 +30,17 @@ namespace xstream {
             return converter.FromXml(reader, this);
         }
 
+        internal object ConvertAnother(Type elementType)
+        {
+            string nullAttribute = reader.GetAttribute(Attributes.Null);
+            if (nullAttribute != null && nullAttribute == "true") return null;
+            object result = Find();
+            if (result != null) return result;
+            Converter converter = converterLookup.GetConverter(elementType);
+            if (converter == null) return ConvertOriginal(elementType);
+            return converter.FromXml(reader, this);
+        }
+
         public object ConvertOriginal() {
             string nodeName = reader.GetNodeName();
             Type type = TypeToUse(nodeName);
@@ -47,21 +58,58 @@ namespace xstream {
             foreach (Alias alias in aliases) {
                 Type type;
                 if (alias.TryGetType(nodeName, out type))
+                {
                     return type;
+                }
             }
             string typeName = reader.GetAttribute(Attributes.classType);
-            return GetTypeFromOtherAssemblies(typeName);
+
+            if (typeName == "")
+            {
+                typeName = nodeName;
+            }
+
+            Type returnType = GetTypeFromOtherAssemblies(typeName);
+
+            if(returnType == null)
+            {
+                char[] a = typeName.ToCharArray();
+                a[0] = char.ToUpper(a[0]);
+                typeName = new string(a);
+                returnType = GetTypeFromOtherAssemblies(typeName);
+            }
+
+            return returnType;
         }
 
         internal Type GetTypeFromOtherAssemblies(string typeName) {
+
+            if(typeName == "")
+            {
+                return null;
+            }
+
             Type type = Type.GetType(typeName);
             int indexOfComma = typeName.IndexOf(',');
             if (type == null) {
-                string assemblyName = typeName.Substring(indexOfComma + 2);
-                string actualTypeName = typeName.Substring(0, indexOfComma);
+                string assemblyName = String.Empty;
+                string actualTypeName = typeName;
+                if (indexOfComma > 0)
+                {
+                    assemblyName = typeName.Substring(indexOfComma + 2);
+                    actualTypeName = typeName.Substring(0, indexOfComma);
+                }
+                
                 foreach (Assembly assembly in assemblies) {
-                    if (assemblyName.Equals(assembly.FullName)) type = assembly.GetType(actualTypeName);
-                    if (type != null) break;
+                    if (assemblyName.Equals(assembly.FullName) || assemblyName.Equals(string.Empty))
+                    {
+                        type = assembly.GetType(actualTypeName);
+                    }
+
+                    if (type != null)
+                    {
+                        break;
+                    }
                 }
                 if (type == null) throw new ConversionException("Couldn't deserialise from " + typeName);
             }

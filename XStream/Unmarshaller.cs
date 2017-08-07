@@ -44,10 +44,16 @@ namespace xstream {
                     reader.MoveUp();
                 }
                 else {
+                    string reader_CurrentPath = reader.CurrentPath;
                     if (reader.MoveDown(field.Name))
                     {
                         field.SetValue(result, ConvertField(field.FieldType));
                         reader.MoveUp();
+
+                        if(reader.CurrentPath != reader_CurrentPath)
+                        {
+                            Console.Error.WriteLine("Path exception " + field.Name);
+                        }
                     }
                     else
                     {
