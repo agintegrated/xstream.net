@@ -73,6 +73,19 @@ namespace xstream {
 
         public bool MoveDown(string name) {
             bool succeeded = navigator.MoveToChild(name, "");
+
+            if(!succeeded)
+            {
+                // Try case insensitive match.  Sometimes the XML does not match the model exactly.
+                // NOTE: Need to lowercase the first char in the string
+                if ((name[0] & 0x20) == 0)
+                {
+                    char lcFirst = (char)(name[0] | 0x20);
+                    name = lcFirst + name.Substring(1);
+                }
+                succeeded = navigator.MoveToChild(name, "");
+            }
+
             if (succeeded) stack.Push(GetNodeName());
             return succeeded;
         }
