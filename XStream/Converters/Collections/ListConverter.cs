@@ -30,9 +30,14 @@ namespace xstream.Converters.Collections {
 
         public void ToXml(object value, XStreamWriter writer, MarshallingContext context) {
             IList list = (IList) value;
-            writer.WriteAttribute(LIST_TYPE, value.GetType().FullName);
+            
+            // classType is not valid for cross platform usage
+            //writer.WriteAttribute(LIST_TYPE, value.GetType().FullName);
+
             foreach (object o in list)
+            {
                 context.ConvertOriginal(o);
+            }
         }
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {

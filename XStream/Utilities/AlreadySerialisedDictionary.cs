@@ -4,6 +4,14 @@ namespace xstream.Utilities {
     internal class AlreadySerialisedDictionary {
         private readonly Dictionary<object, string> dictionary = new Dictionary<object, string>(new ReferenceComparer());
 
+        public int Count
+        {
+            get
+            {
+                return dictionary.Count;
+            }
+        }
+
         public bool ContainsKey(object value) {
             if (value == null) return false;
             return dictionary.ContainsKey(value);

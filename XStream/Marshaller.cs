@@ -40,7 +40,11 @@ namespace xstream {
             if (fieldValue == null) return;
             Type actualType = fieldValue.GetType();
             if (!field.FieldType.Equals(actualType))
+            {
+                // TODO: Examine the behavior of this
+                //  classType is not valid for cross platform usage
                 writer.WriteAttribute(Attributes.classType, actualType.AssemblyQualifiedName);
+            }
         }
     }
 }

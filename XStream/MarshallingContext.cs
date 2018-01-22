@@ -23,9 +23,19 @@ namespace xstream {
 
         private void ConvertObject(object value) {
             if (alreadySerialised.ContainsKey(value))
-                writer.WriteAttribute(Attributes.references, alreadySerialised[value]);
-            else {
-                alreadySerialised.Add(value, writer.CurrentPath);
+            {
+                // Reference by ID, not path
+                writer.WriteAttribute(Attributes.reference, alreadySerialised[value]);
+            }
+            else
+            {
+                // Store the ID of the object
+                int index = alreadySerialised.Count + 1;
+                alreadySerialised.Add(value, index.ToString());
+
+                // Write attribute for own id
+                writer.WriteAttribute(Attributes.id, index.ToString());
+
                 new Marshaller(writer, this).Marshal(value);
             }
         }
@@ -46,7 +56,8 @@ namespace xstream {
                 }
             }
             writer.StartNode(Xmlifier.XmlifyNode(type));
-            writer.WriteAttribute(Attributes.classType, type.AssemblyQualifiedName);
+            //  classType is not valid for cross platform usage
+            //writer.WriteAttribute(Attributes.classType, type.AssemblyQualifiedName);
         }
     }
 }
