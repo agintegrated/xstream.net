@@ -8,8 +8,7 @@ namespace xstream.Converters {
 
         public void ToXml(object value, XStreamWriter writer, MarshallingContext context)
         {
-            // Suppress null output
-            //  writer.WriteAttribute(Attributes.Null, true.ToString());
+            writer.WriteAttribute(Attributes.Null, true.ToString());
         }
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {

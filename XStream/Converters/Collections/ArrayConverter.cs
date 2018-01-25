@@ -12,10 +12,15 @@ namespace xstream.Converters.Collections {
             Array array = (Array) value;
             string typeName = value.GetType().AssemblyQualifiedName;
             int lastIndexOfBrackets = typeName.LastIndexOf("[]");
-            string arrayType = string.Concat(typeName.Substring(0, lastIndexOfBrackets), typeName.Substring(lastIndexOfBrackets + 2));
-            writer.WriteAttribute(ARRAY_TYPE, arrayType);
+
+            //  classType is not valid for cross platform usage
+            //string arrayType = string.Concat(typeName.Substring(0, lastIndexOfBrackets), typeName.Substring(lastIndexOfBrackets + 2));
+            //  writer.WriteAttribute(ARRAY_TYPE, arrayType);
+
             foreach (object o in array)
+            {
                 context.ConvertOriginal(o);
+            }
         }
 
         public object FromXml(XStreamReader reader, UnmarshallingContext context) {

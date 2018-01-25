@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using xstream.Converters;
 
-namespace xstream {
-    public class UnmarshallingContext {
+namespace xstream
+{
+    public class UnmarshallingContext
+    {
         private readonly Dictionary<string, object> alreadyDeserialised = new Dictionary<string, object>();
         private readonly XStreamReader reader;
         private readonly ConverterLookup converterLookup;
@@ -13,14 +15,16 @@ namespace xstream {
 
         public Type currentTargetType = null;
 
-        internal UnmarshallingContext(XStreamReader reader, ConverterLookup converterLookup, Aliases aliases, List<Assembly> assemblies) {
+        internal UnmarshallingContext(XStreamReader reader, ConverterLookup converterLookup, Aliases aliases, List<Assembly> assemblies)
+        {
             this.reader = reader;
             this.converterLookup = converterLookup;
             this.aliases = aliases;
             this.assemblies = assemblies;
         }
 
-        public object ConvertAnother() {
+        public object ConvertAnother()
+        {
             string nullAttribute = reader.GetAttribute(Attributes.Null);
             if (nullAttribute != null && nullAttribute == "true")
             {
@@ -57,7 +61,8 @@ namespace xstream {
             return converter.FromXml(reader, this);
         }
 
-        public object ConvertOriginal() {
+        public object ConvertOriginal()
+        {
             string nodeName = reader.GetNodeName();
             Type type = TypeToUse(nodeName);
             return ConvertOriginal(type);
@@ -66,18 +71,25 @@ namespace xstream {
         public object ConvertOriginal(Type type)
         {
             Converter converter = converterLookup.GetConverter(type);
-            if (converter != null) return converter.FromXml(reader, this);
+            if (converter != null)
+            {
+                return converter.FromXml(reader, this);
+            }
+
             return new Unmarshaller(reader, this, converterLookup).Unmarshal(type);
         }
 
-        private Type TypeToUse(string nodeName) {
-            foreach (Alias alias in aliases) {
+        private Type TypeToUse(string nodeName)
+        {
+            foreach (Alias alias in aliases)
+            {
                 Type type;
                 if (alias.TryGetType(nodeName, out type))
                 {
                     return type;
                 }
             }
+
             string typeName = reader.GetAttribute(Attributes.classType);
 
             if (typeName == "")
@@ -87,7 +99,7 @@ namespace xstream {
 
             Type returnType = GetTypeFromOtherAssemblies(typeName);
 
-            if(returnType == null)
+            if (returnType == null)
             {
                 char[] a = typeName.ToCharArray();
                 a[0] = char.ToUpper(a[0]);
@@ -98,16 +110,17 @@ namespace xstream {
             return returnType;
         }
 
-        internal Type GetTypeFromOtherAssemblies(string typeName) {
-
-            if(typeName == "")
+        internal Type GetTypeFromOtherAssemblies(string typeName)
+        {
+            if (typeName == "")
             {
                 return null;
             }
 
             Type type = Type.GetType(typeName);
             int indexOfComma = typeName.IndexOf(',');
-            if (type == null) {
+            if (type == null)
+            {
                 string assemblyName = String.Empty;
                 string actualTypeName = typeName;
                 if (indexOfComma > 0)
@@ -115,8 +128,9 @@ namespace xstream {
                     assemblyName = typeName.Substring(indexOfComma + 2);
                     actualTypeName = typeName.Substring(0, indexOfComma);
                 }
-                
-                foreach (Assembly assembly in assemblies) {
+
+                foreach (Assembly assembly in assemblies)
+                {
                     if (assemblyName.Equals(assembly.FullName) || assemblyName.Equals(string.Empty))
                     {
                         type = assembly.GetType(actualTypeName);
@@ -127,12 +141,17 @@ namespace xstream {
                         break;
                     }
                 }
-                if (type == null) throw new ConversionException("Couldn't deserialise from " + typeName);
+
+                if (type == null)
+                {
+                    throw new ConversionException("Couldn't deserialise from " + typeName);
+                }
             }
             return type;
         }
 
-        public void StackObject(object value) {
+        public void StackObject(object value)
+        {
             // NOTE:  Because this reader is not streaming, we will somtimes hit a reference before the id is defined.
             //  Check for either 'id' or 'reference' when adding
             string idReferenceAttribute = reader.GetAttribute(Attributes.id);
@@ -141,7 +160,8 @@ namespace xstream {
                 idReferenceAttribute = reader.GetAttribute(Attributes.reference);
             }
 
-            try {
+            try
+            {
                 if (!string.IsNullOrEmpty(idReferenceAttribute))
                 {
                     alreadyDeserialised.Add(idReferenceAttribute, value);
@@ -151,12 +171,14 @@ namespace xstream {
                     alreadyDeserialised[reader.CurrentPath] = value;
                 }
             }
-            catch (ArgumentException e) {
+            catch (ArgumentException e)
+            {
                 throw new ConversionException(string.Format("Couldn't add path:{0}, value: {1}", reader.CurrentPath, value), e);
             }
         }
 
-        public object Find() {
+        public object Find()
+        {
             // NOTE:  Because this reader is not streaming, we will somtimes hit a reference before the id is defined.
             //  Check for either 'id' or 'reference' when doing a lookup
             string idReferenceAttribute = reader.GetAttribute(Attributes.reference);
@@ -174,7 +196,7 @@ namespace xstream {
             }
 
             string referencesAttribute = reader.GetAttribute(Attributes.references);
-            if (!string.IsNullOrEmpty(referencesAttribute)) 
+            if (!string.IsNullOrEmpty(referencesAttribute))
             {
                 return alreadyDeserialised[referencesAttribute];
             }

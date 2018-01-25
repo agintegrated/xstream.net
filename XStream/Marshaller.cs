@@ -8,17 +8,20 @@ namespace xstream {
         private readonly XStreamWriter writer;
         private readonly MarshallingContext context;
 
-        public Marshaller(XStreamWriter writer, MarshallingContext context) {
+        public Marshaller(XStreamWriter writer, MarshallingContext context)
+        {
             this.writer = writer;
             this.context = context;
         }
 
-        public void Marshal(object value) {
+        public void Marshal(object value)
+        {
             MarshalAs(value, value.GetType());
         }
 
-        private void MarshalAs(object value, Type type) {
-            if (type.Equals(typeof (object))) return;
+        private void MarshalAs(object value, Type type)
+        {
+            if (type.Equals(typeof (object)) || value == null) return;
             FieldInfo[] fields = type.GetFields(Constants.BINDINGFlags);
             foreach (var field in fields) {
                 if (field.GetCustomAttributes(typeof (DontSerialiseAttribute), true).Length != 0) continue;
@@ -44,15 +47,20 @@ namespace xstream {
                     nodeName = javaPropertyMatch.Result("$1");
                 }
 
-                writer.StartNode(nodeName);
-                WriteClassNameIfNeedBe(value, field);
-                context.ConvertAnother(field.GetValue(value));
-                writer.EndNode();
+                object fieldValue = field.GetValue(value);
+                if (fieldValue != null)
+                {
+                    writer.StartNode(nodeName);
+                    WriteClassNameIfNeedBe(value, field);
+                    context.ConvertAnother(fieldValue);
+                    writer.EndNode();
+                }
             }
             MarshalAs(value, type.BaseType);
         }
 
-        private void WriteClassNameIfNeedBe(object value, FieldInfo field) {
+        private void WriteClassNameIfNeedBe(object value, FieldInfo field)
+        {
             object fieldValue = field.GetValue(value);
             if (fieldValue == null) return;
             Type actualType = fieldValue.GetType();

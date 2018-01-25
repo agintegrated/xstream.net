@@ -1,31 +1,39 @@
 using System;
 using System.Collections;
 
-namespace xstream.Converters.Collections {
-    internal abstract class BaseDictionaryConverter<T> : Converter where T : IDictionary {
-        protected const string KEY = "key";
-        private const string VALUE = "value";
+namespace xstream.Converters.Collections
+{
+    internal abstract class BaseDictionaryConverter<T> : Converter where T : IDictionary
+    {
+        public bool CanConvert(Type type)
+        {
+            if (typeof(T).IsGenericType && type.IsGenericType)
+            {
+                return type.GetGenericTypeDefinition().Equals(typeof(T).GetGenericTypeDefinition());
+            }
 
-        public bool CanConvert(Type type) {
-            if (typeof (T).IsGenericType && type.IsGenericType)
-                return type.GetGenericTypeDefinition().Equals(typeof (T).GetGenericTypeDefinition());
-            return type.Equals(typeof (T));
+            return type.Equals(typeof(T));
         }
 
-        public void ToXml(object value, XStreamWriter writer, MarshallingContext context) {
-            IDictionary dictionary = (IDictionary) value;
+        public void ToXml(object value, XStreamWriter writer, MarshallingContext context)
+        {
+            IDictionary dictionary = (IDictionary)value;
             DoSpecificStuff(dictionary, writer);
-            foreach (DictionaryEntry entry in dictionary) {
+            foreach (DictionaryEntry entry in dictionary)
+            {
                 writer.StartNode("entry");
-                WriteNode(writer, context, BaseDictionaryConverter<Hashtable>.KEY, entry.Key);
-                WriteNode(writer, context, BaseDictionaryConverter<Hashtable>.VALUE, entry.Value);
+
+                context.ConvertOriginal(entry.Key);
+                context.ConvertOriginal(entry.Value);
+
                 writer.EndNode();
             }
         }
 
-        protected virtual void DoSpecificStuff(IDictionary dictionary, XStreamWriter writer) {}
+        protected virtual void DoSpecificStuff(IDictionary dictionary, XStreamWriter writer) { }
 
-        public object FromXml(XStreamReader reader, UnmarshallingContext context) {
+        public object FromXml(XStreamReader reader, UnmarshallingContext context)
+        {
             IDictionary result = EmptyDictionary(reader, context);
             int count = reader.NoOfChildren();
             if (reader.MoveDown())
@@ -49,13 +57,6 @@ namespace xstream.Converters.Collections {
         }
 
         protected abstract IDictionary EmptyDictionary(XStreamReader reader, UnmarshallingContext context);
-
-        private static void GetObject(UnmarshallingContext context, ref object key, ref object value, XStreamReader reader) {
-            string nodeName = reader.GetNodeName();
-            object o = context.ConvertOriginal();
-            if (BaseDictionaryConverter<Hashtable>.KEY.Equals(nodeName)) key = o;
-            else value = o;
-        }
 
         private static void GetKeyObject(UnmarshallingContext context, ref object key, XStreamReader reader)
         {
@@ -81,15 +82,6 @@ namespace xstream.Converters.Collections {
             value = context.ConvertOriginal(valueType);
 
             context.currentTargetType = previousType;
-        }
-
-        private static void WriteNode(XStreamWriter writer, MarshallingContext context, string node, object value) {
-            writer.StartNode(node);
-            Type type = value != null ? value.GetType() : typeof (object);
-            //  classType is not valid for cross platform usage
-            //  writer.WriteAttribute(Attributes.classType, type.AssemblyQualifiedName);
-            context.ConvertAnother(value);
-            writer.EndNode();
         }
     }
 }

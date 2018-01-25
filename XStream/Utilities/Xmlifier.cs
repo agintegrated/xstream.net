@@ -14,7 +14,8 @@ namespace xstream.Utilities {
             return intermediate;
         }
 
-        public static string XmlifyNode(Type type) {
+        public static string XmlifyNode(Type type)
+        {
             StringBuilder typeName = new StringBuilder(S.RemoveFrom(type.Name.Replace("[]", "-array"), "`"));
             Type[] genericArguments = type.GetGenericArguments();
             for (int i = 0; i < genericArguments.Length; i++) {
