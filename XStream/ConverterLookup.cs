@@ -29,6 +29,7 @@ namespace xstream {
             standardConverters.Add(new SingleValueConverter<char>(char.Parse));
             standardConverters.Add(new EnumConverter());
             standardConverters.Add(new HashtableConverter());
+            standardConverters.Add(new EncodedByteArrayConverter());
             standardConverters.Add(new ArrayConverter());
             standardConverters.Add(new ListConverter());
             standardConverters.Add(new DictionaryConverter());

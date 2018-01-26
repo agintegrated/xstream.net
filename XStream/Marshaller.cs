@@ -3,8 +3,10 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
-namespace xstream {
-    internal class Marshaller {
+namespace xstream
+{
+    internal class Marshaller
+    {
         private readonly XStreamWriter writer;
         private readonly MarshallingContext context;
 
@@ -21,12 +23,17 @@ namespace xstream {
 
         private void MarshalAs(object value, Type type)
         {
-            if (type.Equals(typeof (object)) || value == null) return;
+            if (type.Equals(typeof(object)) || value == null)
+            {
+                return;
+            }
+
             FieldInfo[] fields = type.GetFields(Constants.BINDINGFlags);
-            foreach (var field in fields) {
-                if (field.GetCustomAttributes(typeof (DontSerialiseAttribute), true).Length != 0) continue;
-                if (field.GetCustomAttributes(typeof (XmlIgnoreAttribute), true).Length != 0) continue;
-                if (typeof (MulticastDelegate).IsAssignableFrom(field.FieldType)) continue;
+            foreach (FieldInfo field in fields)
+            {
+                if (field.GetCustomAttributes(typeof(DontSerialiseAttribute), true).Length != 0) continue;
+                if (field.GetCustomAttributes(typeof(XmlIgnoreAttribute), true).Length != 0) continue;
+                if (typeof(MulticastDelegate).IsAssignableFrom(field.FieldType)) continue;
 
                 string nodeName = field.Name;
                 if (nodeName.StartsWith("__") || nodeName == "_id")
@@ -56,6 +63,22 @@ namespace xstream {
                     writer.EndNode();
                 }
             }
+
+            PropertyInfo[] properties = type.GetProperties(Constants.BINDINGFlags);
+            foreach (PropertyInfo property in properties)
+            {
+                // Only serialize propertied that are explicitly set
+                if (property.GetCustomAttributes(typeof(SerialisedProperty), true).Length != 1) continue;
+                
+                object fieldValue = property.GetValue(value);
+                if (fieldValue != null)
+                {
+                    writer.StartNode(property.Name);
+                    context.ConvertAnother(fieldValue);
+                    writer.EndNode();
+                }
+            }
+
             MarshalAs(value, type.BaseType);
         }
 

@@ -46,6 +46,7 @@
     <Compile Include="Alias.cs" />
     <Compile Include="Converters\Collections\BaseDictionaryConverter.cs" />
     <Compile Include="Converters\Collections\DictionaryConverter.cs" />
+    <Compile Include="Converters\EncodedByteArrayConverter.cs" />
     <Compile Include="DontSerialiseAttribute.cs" />
     <Compile Include="Utilities\AlreadySerialisedDictionary.cs" />
     <Compile Include="Attributes.cs" />
